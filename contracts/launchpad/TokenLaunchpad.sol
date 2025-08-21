@@ -26,6 +26,7 @@ import {ICLMMAdapter} from "contracts/interfaces/ICLMMAdapter.sol";
 
 import {IReferralDistributor} from "contracts/interfaces/IReferralDistributor.sol";
 import {ITokenLaunchpad} from "contracts/interfaces/ITokenLaunchpad.sol";
+import {IBondingCurve} from "contracts/interfaces/IBondingCurve.sol";
 
 abstract contract TokenLaunchpad is ITokenLaunchpad, OwnableUpgradeable, ERC721EnumerableUpgradeable {
   using SafeERC20 for IERC20;
@@ -55,6 +56,9 @@ abstract contract TokenLaunchpad is ITokenLaunchpad, OwnableUpgradeable, ERC721E
 
   // Airdrop Rewarder contract
   IAirdropRewarder public airdropRewarder;
+
+  // Bonding Curve contract
+  IBondingCurve public bondingCurve;
 
   // Default creator allocation percentage
   uint16 public DEFAULT_CREATOR_ALLOCATION;
@@ -209,38 +213,31 @@ abstract contract TokenLaunchpad is ITokenLaunchpad, OwnableUpgradeable, ERC721E
 
       pendingBalance = token.balanceOf(address(this));
 
-      token.approve(address(p.adapter), type(uint256).max);
-      address pool = p.adapter.addSingleSidedLiquidity(
-        ICLMMAdapter.AddLiquidityParams({
-          tokenBase: token,
-          tokenQuote: p.fundingToken,
-          tick0: p.valueParams.launchTick,
-          tick1: p.valueParams.graduationTick,
-          tick2: p.valueParams.upperMaxTick,
-          fee: p.valueParams.fee,
-          tickSpacing: p.valueParams.tickSpacing,
-          totalAmount: pendingBalance,
-          graduationAmount: p.valueParams.graduationLiquidity,
-          burnPosition: burnPosition
-        })
-      );
-      emit TokenLaunched(token, address(p.adapter), pool, p);
+      // Instead of immediate DEX launch, create bonding curve
+      _createBondingCurve(token, p, pendingBalance);
+      
+      emit TokenLaunched(token, address(p.adapter), address(0), p);
     }
 
     _mint(msg.sender, tokenToNftId[token]);
 
-    p.fundingToken.approve(address(p.adapter), type(uint256).max);
-
-    // buy a small amount of tokens to register the token on tools like dexscreener
-    uint256 balance = p.fundingToken.balanceOf(address(this));
-
-    // buy 1 token
-    uint256 swapped = p.adapter.swapWithExactOutput(p.fundingToken, token, 1 ether, balance, p.valueParams.fee);
-
-    // if the user wants to buy more tokens, they can do so
+    // If user wants to buy tokens, buy from bonding curve
     uint256 received;
     if (amount > 0) {
-      received = p.adapter.swapWithExactInput(p.fundingToken, token, amount - swapped, 0, p.valueParams.fee);
+      if (address(p.fundingToken) == address(0)) {
+        // ETH purchase - forward ETH to bonding curve
+        uint256 ethBalance = address(this).balance;
+        if (ethBalance >= amount) {
+          received = bondingCurve.buyTokens{value: amount}(token, amount, 0);
+        }
+      } else {
+        // ERC20 purchase - approve and let bonding curve pull tokens
+        uint256 balance = p.fundingToken.balanceOf(address(this));
+        if (balance >= amount) {
+          p.fundingToken.approve(address(bondingCurve), amount);
+          received = bondingCurve.buyTokens(token, amount, 0);
+        }
+      }
     }
 
     // refund any remaining tokens
@@ -248,7 +245,7 @@ abstract contract TokenLaunchpad is ITokenLaunchpad, OwnableUpgradeable, ERC721E
     _refundTokens(p.fundingToken);
     _refundTokens(weth);
 
-    return (address(token), received, swapped);
+    return (address(token), received, 0); // swapped is always 0 in bonding curve model
   }
 
   /// @inheritdoc ITokenLaunchpad
@@ -326,4 +323,37 @@ abstract contract TokenLaunchpad is ITokenLaunchpad, OwnableUpgradeable, ERC721E
     airdropRewarder = IAirdropRewarder(_airdropRewarder);
     emit AirdropRewarderSet(_airdropRewarder);
   }
+
+  /**
+   * @notice Set the bonding curve contract
+   * @param _bondingCurve Address of the bonding curve contract
+   */
+  function setBondingCurve(address _bondingCurve) external onlyOwner {
+    require(_bondingCurve != address(0), "Invalid address");
+    bondingCurve = IBondingCurve(_bondingCurve);
+    emit BondingCurveSet(_bondingCurve);
+  }
+
+  /**
+   * @dev Internal function to create bonding curve and transfer tokens
+   * @param token The token to create bonding curve for
+   * @param p The create parameters
+   * @param pendingBalance The amount of tokens to transfer
+   */
+  function _createBondingCurve(WAGMIEToken token, CreateParams memory p, uint256 pendingBalance) internal {
+    require(address(bondingCurve) != address(0), "Bonding curve not set");
+    
+    // Create bonding curve with auto-calculated initial price
+    bondingCurve.createBondingCurve(
+      token,
+      p.fundingToken,
+      p.adapter,
+      50000 * 1e18, // Launch market cap: $50,000 (initial price auto-calculated)
+      p.valueParams // Pass the value params for DEX launch
+    );
+    
+    // Transfer all tokens to bonding curve for management
+    token.transfer(address(bondingCurve), pendingBalance);
+  }
 }
+

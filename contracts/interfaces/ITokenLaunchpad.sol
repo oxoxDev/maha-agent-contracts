@@ -108,6 +108,10 @@ interface ITokenLaunchpad {
   /// @param _airdropRewarder The address of the airdrop rewarder
   event AirdropRewarderSet(address indexed _airdropRewarder);
 
+  /// @notice Emitted when the bonding curve is set
+  /// @param _bondingCurve The address of the bonding curve
+  event BondingCurveSet(address indexed _bondingCurve);
+
   /// @notice Emitted when a fee is claimed for a token
   /// @param _token The token that the fee was claimed for
   /// @param _fee0 The amount of fee claimed for token0

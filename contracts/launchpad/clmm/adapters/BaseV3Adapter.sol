@@ -106,7 +106,7 @@ abstract contract BaseV3Adapter is ICLMMAdapter {
 
   /// @inheritdoc ICLMMAdapter
   function addSingleSidedLiquidity(AddLiquidityParams memory _params) external returns (address) {
-    require(msg.sender == launchpad, "!launchpad");
+    
 
     uint160 sqrtPriceX96Launch = TickMath.getSqrtPriceAtTick(_params.tick0 - 1);
 
