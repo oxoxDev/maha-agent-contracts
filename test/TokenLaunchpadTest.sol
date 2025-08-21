@@ -12,7 +12,7 @@ import {Test} from "lib/forge-std/src/Test.sol";
 import "forge-std/console.sol";
 
 contract TokenLaunchpadTest is Test {
-  MockERC20 _weth;
+  IERC20 _weth;
   MockERC20 _maha;
   MockERC20 _stakingToken;
 
@@ -24,7 +24,7 @@ contract TokenLaunchpadTest is Test {
   address feeDestination = makeAddr("feeDestination");
 
   function _setUpBase() internal {
-    _weth = new MockERC20("Wrapped Ether", "WETH", 18);
+    _weth = IERC20(0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c);
     _maha = new MockERC20("Maha", "MAHA", 18);
     _stakingToken = new MockERC20("Staking Token", "STK", 18);
 
@@ -39,7 +39,7 @@ contract TokenLaunchpadTest is Test {
     vm.deal(address(this), 100 ether);
   }
 
-  function findValidTokenHash(string memory _name, string memory _symbol, address _creator, MockERC20 _quoteToken)
+  function findValidTokenHash(string memory _name, string memory _symbol, address _creator, IERC20 _quoteToken)
     internal
     view
     returns (bytes32)
