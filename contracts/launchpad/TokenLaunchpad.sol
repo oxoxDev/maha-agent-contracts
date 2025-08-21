@@ -348,7 +348,6 @@ function createAndBuy(
       token,
       p.fundingToken,
       p.adapter,
-      50000 * 1e18, // Launch market cap: $50,000 (initial price auto-calculated)
       p.valueParams // Pass the value params for DEX launch
     );
     

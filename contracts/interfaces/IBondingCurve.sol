@@ -37,7 +37,6 @@ interface IBondingCurve {
     uint256 currentPrice; // Current price per token in funding token
     uint256 k; // Bonding curve constant (for price calculation)
     bool isLaunched; // Whether the token has been launched to DEX
-    uint256 launchMarketCap; // Market cap at which token launches to DEX
     ITokenLaunchpad.ValueParams valueParams; // Parameters for DEX launch
   }
 
@@ -45,12 +44,10 @@ interface IBondingCurve {
   /// @param token The token address
   /// @param fundingToken The funding token address
   /// @param initialPrice The initial price per token
-  /// @param launchMarketCap The market cap threshold for DEX launch
   event BondingCurveCreated(
     IERC20 indexed token,
     IERC20 indexed fundingToken,
-    uint256 initialPrice,
-    uint256 launchMarketCap
+    uint256 initialPrice
   );
 
   /// @notice Emitted when tokens are bought on the bonding curve
@@ -109,14 +106,12 @@ interface IBondingCurve {
   /// @param _token The token to create a bonding curve for
   /// @param _fundingToken The funding token (e.g., WETH, USDC)
   /// @param _adapter The CLMM adapter for DEX integration
-  /// @param _launchMarketCap The market cap threshold for DEX launch
   /// @param _valueParams The parameters for DEX launch
   /// @dev Initial price is auto-calculated from bonding curve formula: r / 10^9
   function createBondingCurve(
     IERC20 _token,
     IERC20 _fundingToken,
     ICLMMAdapter _adapter,
-    uint256 _launchMarketCap,
     ITokenLaunchpad.ValueParams memory _valueParams
   ) external;
 

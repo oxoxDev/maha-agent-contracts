@@ -23,6 +23,12 @@ import {IBondingCurve} from "contracts/interfaces/IBondingCurve.sol";
 import {ICLMMAdapter} from "contracts/interfaces/ICLMMAdapter.sol";
 import {ITokenLaunchpad} from "contracts/interfaces/ITokenLaunchpad.sol";
 
+/// @notice Chainlink Price Feed Interface
+interface IPriceOracle {
+  function latestRoundData() external view returns (uint80 roundId, int256 price, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);
+  function decimals() external view returns (uint8);
+}
+
 /// @title BondingCurve
 /// @notice A contract that manages token pricing through bonding curves and handles DEX launches
 /// @dev Uses constant product formula: (1e9 - supply) * (reserve + r) = r * 1e9
@@ -31,9 +37,9 @@ contract BondingCurve is IBondingCurve, OwnableUpgradeable, ReentrancyGuardUpgra
 
   // Constants
   uint256 public constant TOTAL_SUPPLY = 1_000_000_000 ether; // 1 billion tokens
-  uint256 private constant PRECISION = 1e18;
-  uint256 private constant PERCENTAGE_BASE = 10000; // 100% = 10000
-  uint256 private constant MIGRATION_THRESHOLD_PERCENT = 80; // 80% for DEX migration
+  uint256 private constant _PRECISION = 1e18;
+  uint256 private constant _PERCENTAGE_BASE = 10000; // 100% = 10000
+  uint256 private constant _VIRTUAL_RESERVE = 0.5 ether; // Constant r = 0.5 ETH
 
   // Bonding curve configuration
   struct BondingCurveConfigInternal {
@@ -43,7 +49,6 @@ contract BondingCurve is IBondingCurve, OwnableUpgradeable, ReentrancyGuardUpgra
     uint256 virtualReserve; // r value from bonding curve formula
     uint256 actualReserve; // current reserve balance (y in formula)
     uint256 circulatingSupply; // tokens in circulation (s in formula)
-    uint256 launchMarketCap; // market cap threshold for DEX launch
     bool isLaunched;
     ITokenLaunchpad.ValueParams valueParams;
   }
@@ -57,8 +62,9 @@ contract BondingCurve is IBondingCurve, OwnableUpgradeable, ReentrancyGuardUpgra
   address public feeDestination;
   ITokenLaunchpad public tokenLaunchpad;
 
-  // Special token addresses for determining r values
-  address public specialTokenAddress;
+  // Market cap-based launch settings
+  mapping(IERC20 => address) public priceOracles; // Chainlink price feeds for funding tokens
+  uint256 public launchMarketCapUSD; // Launch threshold in USD (e.g., $10,000)
 
   modifier onlyActiveBondingCurve(IERC20 _token) {
     require(isBondingCurveActive[_token], "Bonding curve not active");
@@ -71,13 +77,13 @@ contract BondingCurve is IBondingCurve, OwnableUpgradeable, ReentrancyGuardUpgra
   /// @param _tokenLaunchpad The token launchpad contract address
   /// @param _protocolFee The protocol fee (scaled by PERCENTAGE_BASE)
   /// @param _feeDestination The destination for protocol fees
-  /// @param _specialToken The special token address for r value determination
+  /// @param _launchMarketCapUSD The market cap threshold in USD for DEX launch
   function initialize(
     address _owner,
     address _tokenLaunchpad,
     uint256 _protocolFee,
     address _feeDestination,
-    address _specialToken
+    uint256 _launchMarketCapUSD
   ) external initializer {
     __Ownable_init(_owner);
     __ReentrancyGuard_init();
@@ -85,7 +91,7 @@ contract BondingCurve is IBondingCurve, OwnableUpgradeable, ReentrancyGuardUpgra
     tokenLaunchpad = ITokenLaunchpad(_tokenLaunchpad);
     protocolFee = _protocolFee;
     feeDestination = _feeDestination;
-    specialTokenAddress = _specialToken;
+    launchMarketCapUSD = _launchMarketCapUSD; // e.g., 10_000e18 for $10,000
   }
 
   /// @inheritdoc IBondingCurve
@@ -93,33 +99,27 @@ contract BondingCurve is IBondingCurve, OwnableUpgradeable, ReentrancyGuardUpgra
     IERC20 _token,
     IERC20 _fundingToken,
     ICLMMAdapter _adapter,
-    uint256 _launchMarketCap,
     ITokenLaunchpad.ValueParams memory _valueParams
   ) external {
     require(msg.sender == address(tokenLaunchpad), "Only TokenLaunchpad can create");
     require(address(_token) != address(0), "Invalid token");
     require(address(_adapter) != address(0), "Invalid adapter");
-    require(_launchMarketCap > 0, "Invalid launch market cap");
     require(!isBondingCurveActive[_token], "Bonding curve already exists");
-
-    // Determine virtual reserve (r value) based on funding token
-    uint256 virtualReserve = _getVirtualReserve(_fundingToken);
 
     bondingCurves[_token] = BondingCurveConfigInternal({
       token: _token,
       fundingToken: _fundingToken,
       adapter: _adapter,
-      virtualReserve: virtualReserve,
+      virtualReserve: _VIRTUAL_RESERVE, // Use constant r = 0.5 ETH
       actualReserve: 0, // y starts at 0
       circulatingSupply: 0, // s starts at 0 (all tokens locked)
-      launchMarketCap: _launchMarketCap,
       isLaunched: false,
       valueParams: _valueParams
     });
 
     isBondingCurveActive[_token] = true;
 
-    emit BondingCurveCreated(_token, _fundingToken, _getInitialPrice(_token), _launchMarketCap);
+    emit BondingCurveCreated(_token, _fundingToken, _getInitialPrice(_token));
   }
 
   /// @inheritdoc IBondingCurve
@@ -134,7 +134,7 @@ contract BondingCurve is IBondingCurve, OwnableUpgradeable, ReentrancyGuardUpgra
     
     // Calculate new supply using bonding curve formula
     uint256 newReserve = config.actualReserve + _amountIn;
-    uint256 newSupply = _estimateSupply(config.virtualReserve, newReserve);
+    uint256 newSupply = _estimateSupply(_VIRTUAL_RESERVE, newReserve);
     
     amountOut = newSupply - config.circulatingSupply;
     require(amountOut >= _minAmountOut, "Insufficient output amount");
@@ -142,7 +142,7 @@ contract BondingCurve is IBondingCurve, OwnableUpgradeable, ReentrancyGuardUpgra
     require(newSupply <= TOTAL_SUPPLY, "Exceeds total supply");
 
     // Take protocol fee
-    uint256 feeAmount = (_amountIn * protocolFee) / PERCENTAGE_BASE;
+    uint256 feeAmount = (_amountIn * protocolFee) / _PERCENTAGE_BASE;
     uint256 netAmountIn = _amountIn - feeAmount;
 
     if (address(config.fundingToken) == address(0)) {
@@ -169,7 +169,7 @@ contract BondingCurve is IBondingCurve, OwnableUpgradeable, ReentrancyGuardUpgra
     
     emit TokensBought(msg.sender, _token, _amountIn, amountOut, currentPrice, marketCap);
 
-    // Check for DEX migration (80% threshold)
+    // Check for DEX migration (market cap threshold)
     if (_shouldMigrateToDEX(_token)) {
       _launchToDEX(_token);
     }
@@ -190,14 +190,14 @@ contract BondingCurve is IBondingCurve, OwnableUpgradeable, ReentrancyGuardUpgra
     
     // Calculate new reserve using bonding curve formula
     uint256 newSupply = config.circulatingSupply - _amountIn;
-    uint256 newReserve = _estimateReserve(config.virtualReserve, newSupply);
+    uint256 newReserve = _estimateReserve(_VIRTUAL_RESERVE, newSupply);
     
     amountOut = config.actualReserve - newReserve;
     require(amountOut >= _minAmountOut, "Insufficient output amount");
     require(config.actualReserve >= amountOut, "Insufficient reserves");
 
     // Take protocol fee
-    uint256 feeAmount = (amountOut * protocolFee) / PERCENTAGE_BASE;
+    uint256 feeAmount = (amountOut * protocolFee) / _PERCENTAGE_BASE;
     uint256 netAmountOut = amountOut - feeAmount;
 
     // Transfer tokens from user
@@ -234,7 +234,7 @@ contract BondingCurve is IBondingCurve, OwnableUpgradeable, ReentrancyGuardUpgra
     BondingCurveConfigInternal memory config = bondingCurves[_token];
     
     uint256 newReserve = config.actualReserve + _amountIn;
-    uint256 newSupply = _estimateSupply(config.virtualReserve, newReserve);
+    uint256 newSupply = _estimateSupply(_VIRTUAL_RESERVE, newReserve);
     return newSupply - config.circulatingSupply;
   }
 
@@ -246,7 +246,7 @@ contract BondingCurve is IBondingCurve, OwnableUpgradeable, ReentrancyGuardUpgra
     if (_amountIn > config.circulatingSupply) return 0;
     
     uint256 newSupply = config.circulatingSupply - _amountIn;
-    uint256 newReserve = _estimateReserve(config.virtualReserve, newSupply);
+    uint256 newReserve = _estimateReserve(_VIRTUAL_RESERVE, newSupply);
     return config.actualReserve - newReserve;
   }
 
@@ -257,7 +257,7 @@ contract BondingCurve is IBondingCurve, OwnableUpgradeable, ReentrancyGuardUpgra
     require(isBondingCurveActive[_token], "Bonding curve not active");
     BondingCurveConfigInternal memory config = bondingCurves[_token];
     
-    return _getPrice(config.virtualReserve, config.circulatingSupply);
+    return _getPrice(_VIRTUAL_RESERVE, config.circulatingSupply);
   }
 
   /// @inheritdoc IBondingCurve
@@ -265,7 +265,7 @@ contract BondingCurve is IBondingCurve, OwnableUpgradeable, ReentrancyGuardUpgra
     require(isBondingCurveActive[_token], "Bonding curve not active");
     BondingCurveConfigInternal memory config = bondingCurves[_token];
     uint256 price = getCurrentPrice(_token);
-    return (price * config.circulatingSupply) / PRECISION;
+    return (price * config.circulatingSupply) / _PRECISION;
   }
 
   /// @inheritdoc IBondingCurve
@@ -280,11 +280,45 @@ contract BondingCurve is IBondingCurve, OwnableUpgradeable, ReentrancyGuardUpgra
     return 8000; // 80%
   }
 
-  /// @dev Check if token should migrate to DEX (80% threshold)
+  /// @dev Check if token should migrate to DEX (market cap threshold)
   function _shouldMigrateToDEX(IERC20 _token) internal view returns (bool) {
     BondingCurveConfigInternal memory config = bondingCurves[_token];
-    uint256 supplyPercentage = (config.circulatingSupply * 100) / TOTAL_SUPPLY;
-    return supplyPercentage >= MIGRATION_THRESHOLD_PERCENT;
+    
+    // Get actual reserves collected (ETH/WBNB amount)
+    uint256 reservesInFundingToken = config.actualReserve;
+    
+    // Convert reserves to USD using price oracle
+    uint256 reservesUSD = _convertToUSD(config.fundingToken, reservesInFundingToken);
+    
+    // Check if reserves exceed threshold ($10,000)
+    return reservesUSD >= launchMarketCapUSD;
+  }
+
+  /// @dev Convert funding token amount to USD using price oracle
+  function _convertToUSD(IERC20 _fundingToken, uint256 _amount) internal view returns (uint256) {
+    address oracle = priceOracles[_fundingToken];
+    
+    if (oracle == address(0)) {
+      // No oracle set, assume 1:1 with USD (for stablecoins like USDC)
+      return _amount;
+    }
+    
+    // Get price from Chainlink oracle
+    (, int256 price, , , ) = IPriceOracle(oracle).latestRoundData();
+    uint8 decimals = IPriceOracle(oracle).decimals();
+    
+    require(price > 0, "Invalid oracle price");
+    
+    // Convert: amount * price / 10^decimals
+    return (_amount * uint256(price)) / (10 ** decimals);
+  }
+
+  /// @dev Get market cap in USD using actual reserves
+  function _getMarketCapInUSD(IERC20 _token) internal view returns (uint256) {
+    BondingCurveConfigInternal memory config = bondingCurves[_token];
+    
+    // Market cap = actual reserves collected in USD
+    return _convertToUSD(config.fundingToken, config.actualReserve);
   }
 
   /// @inheritdoc IBondingCurve
@@ -311,9 +345,8 @@ contract BondingCurve is IBondingCurve, OwnableUpgradeable, ReentrancyGuardUpgra
       totalSupply: TOTAL_SUPPLY,
       reserveBalance: internalConfig.actualReserve,
       currentPrice: getCurrentPrice(_token),
-      k: internalConfig.virtualReserve,
+      k: _VIRTUAL_RESERVE,
       isLaunched: internalConfig.isLaunched,
-      launchMarketCap: internalConfig.launchMarketCap,
       valueParams: internalConfig.valueParams
     });
   }
@@ -344,16 +377,19 @@ contract BondingCurve is IBondingCurve, OwnableUpgradeable, ReentrancyGuardUpgra
   }
 
   /// @dev Estimate supply given reserve using bonding curve formula
-  /// @dev Formula: (1e9 - supply) * (reserve + r) = r * 1e9
-  /// @dev Solving for supply: supply = 1e9 - (r * 1e9) / (reserve + r)
-  /// @param r Virtual reserve parameter
-  /// @param reserve Actual reserve amount
+  /// @dev Mathematical Formula: (TOTAL_SUPPLY - supply) * (reserve + r) = r * TOTAL_SUPPLY
+  /// @dev Solving for supply: supply = TOTAL_SUPPLY - (r * TOTAL_SUPPLY) / (reserve + r)
+  /// @dev This calculates how many tokens should be in circulation for a given reserve amount
+  /// @param r Virtual reserve parameter (constant 0.5 ETH)
+  /// @param reserve Actual reserve amount (ETH/WBNB collected)
   /// @return supply Estimated circulating supply
   function _estimateSupply(uint256 r, uint256 reserve) internal pure returns (uint256 supply) {
     // Avoid division by zero
     if (reserve + r == 0) return 0;
     
-    // Formula: supply = TOTAL_SUPPLY - (r * TOTAL_SUPPLY) / (reserve + r)
+    // Mathematical Formula: supply = TOTAL_SUPPLY - (r * TOTAL_SUPPLY) / (reserve + r)
+    // Example: reserve = 1 ETH, r = 0.5 ETH
+    // supply = 1e9 - (0.5 * 1e9) / (1 + 0.5) = 1e9 - 5e8/1.5 = 1e9 - 333M = 667M tokens
     uint256 nonCirculating = (r * TOTAL_SUPPLY) / (reserve + r);
     
     if (nonCirculating >= TOTAL_SUPPLY) return 0;
@@ -379,54 +415,43 @@ contract BondingCurve is IBondingCurve, OwnableUpgradeable, ReentrancyGuardUpgra
   }
 
   /// @dev Get price using bonding curve formula
-  /// @dev Formula: price = r * 1e9 / (1e9 - supply)^2
-  /// @param r Virtual reserve parameter
+  /// @dev Mathematical Formula: price = (r * TOTAL_SUPPLY * PRECISION) / (TOTAL_SUPPLY - supply)²
+  /// @dev Where r = 0.5 ETH (virtual reserve), supply = circulating tokens
+  /// @dev As supply increases → remaining decreases → price increases exponentially
+  /// @param r Virtual reserve parameter (constant 0.5 ETH)
   /// @param supply Current circulating supply
-  /// @return price Price per token
+  /// @return price Price per token in funding token (ETH/WBNB)
   function _getPrice(uint256 r, uint256 supply) internal pure returns (uint256 price) {
     if (supply >= TOTAL_SUPPLY) return type(uint256).max;
     
     uint256 remaining = TOTAL_SUPPLY - supply;
     
-    // Formula: price = (r * TOTAL_SUPPLY) / (remaining^2)
-    return (r * TOTAL_SUPPLY * PRECISION) / (remaining * remaining);
+    // Mathematical Formula: price = (r * TOTAL_SUPPLY * 1e18) / (remaining_supply)²
+    // Example: When supply = 0, price = (0.5 * 1e9 * 1e18) / (1e9)² = 0.5 wei per token
+    // Example: When supply = 500M, price = (0.5 * 1e9 * 1e18) / (500M)² = 2 wei per token
+    return (r * TOTAL_SUPPLY * _PRECISION) / (remaining * remaining);
   }
 
-  /// @dev Get virtual reserve (r value) based on funding token
-  function _getVirtualReserve(IERC20 _fundingToken) internal view returns (uint256) {
-    if (address(_fundingToken) == address(0)) {
-      return 0.5 ether; // ETH uses r = 0.5
-    } else if (address(_fundingToken) == specialTokenAddress) {
-      return 4_000_000 ether; // Special token uses r = 4,000,000
-    } else {
-      return 0.5 ether; // Default to ETH curve
-    }
-  }
+
 
   /// @dev Get initial price (when supply = 0)
-  function _getInitialPrice(IERC20 _token) internal view returns (uint256) {
-    BondingCurveConfigInternal memory config = bondingCurves[_token];
-    return _getPrice(config.virtualReserve, 0);
+  function _getInitialPrice(IERC20 /* _token */) internal pure returns (uint256) {
+    return _getPrice(_VIRTUAL_RESERVE, 0);
   }
 
-  /// @notice Calculate tokens received for first ETH purchase (demonstration)
-  /// @param _fundingToken The funding token to use
+  /// @notice Calculate tokens received for first purchase (demonstration)
   /// @param _amountIn The amount of funding tokens to spend
   /// @return tokensOut The amount of tokens that would be received
-  function calculateFirstPurchase(IERC20 _fundingToken, uint256 _amountIn) external view returns (uint256 tokensOut) {
-    uint256 r = _getVirtualReserve(_fundingToken);
-    
+  function calculateFirstPurchase(uint256 _amountIn) external pure returns (uint256 tokensOut) {
     // Starting from 0 supply and 0 reserve
-    uint256 newSupply = _estimateSupply(r, _amountIn);
+    uint256 newSupply = _estimateSupply(_VIRTUAL_RESERVE, _amountIn);
     return newSupply; // Since starting supply is 0
   }
 
-  /// @notice Get the exact initial price for a funding token
-  /// @param _fundingToken The funding token
+  /// @notice Get the exact initial price for any token
   /// @return initialPrice The initial price per token
-  function getInitialPriceForToken(IERC20 _fundingToken) external view returns (uint256 initialPrice) {
-    uint256 r = _getVirtualReserve(_fundingToken);
-    return _getPrice(r, 0);
+  function getInitialPrice() external pure returns (uint256 initialPrice) {
+    return _getPrice(_VIRTUAL_RESERVE, 0);
   }
 
   /// @dev Launch token to DEX
@@ -481,15 +506,26 @@ contract BondingCurve is IBondingCurve, OwnableUpgradeable, ReentrancyGuardUpgra
     return pool;
   }
 
-  /// @dev Get market cap in USD
-  function _getMarketCapInUSD(IERC20 _token) internal view returns (uint256) {
-    // Return the market cap in funding token
-    return getMarketCap(_token);
+  /// @notice Set price oracle for a funding token
+  /// @param _fundingToken The funding token (e.g., WETH, WBNB)
+  /// @param _oracle The Chainlink price feed address (e.g., ETH/USD, BNB/USD)
+  function setPriceOracle(IERC20 _fundingToken, address _oracle) external onlyOwner {
+    require(_oracle != address(0), "Invalid oracle address");
+    priceOracles[_fundingToken] = _oracle;
   }
 
-  function setSpecialToken(address _specialToken) external onlyOwner {
-    require(_specialToken != address(0), "Invalid special token");
-    specialTokenAddress = _specialToken;
+  /// @notice Set launch market cap threshold in USD
+  /// @param _launchMarketCapUSD The market cap threshold (e.g., 10_000e18 for $10,000)
+  function setLaunchMarketCapUSD(uint256 _launchMarketCapUSD) external onlyOwner {
+    require(_launchMarketCapUSD > 0, "Invalid market cap threshold");
+    launchMarketCapUSD = _launchMarketCapUSD;
+  }
+
+  /// @notice Get current market cap in USD
+  /// @param _token The token to get market cap for
+  /// @return marketCapUSD The market cap in USD
+  function getMarketCapUSD(IERC20 _token) external view returns (uint256 marketCapUSD) {
+    return _getMarketCapInUSD(_token);
   }
 
   // Emergency functions
