@@ -1,0 +1,1085 @@
+{
+  "address": "0xede83aF1d3727C0408638667BED0A05Ab490E67c",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "InvalidInitialization",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "NotInitializing",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnableInvalidOwner",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "OwnableUnauthorizedAccount",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "ReentrancyGuardReentrantCall",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        }
+      ],
+      "name": "SafeERC20FailedOperation",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "contract IERC20",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "contract IERC20",
+          "name": "fundingToken",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "initialPrice",
+          "type": "uint256"
+        }
+      ],
+      "name": "BondingCurveCreated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint64",
+          "name": "version",
+          "type": "uint64"
+        }
+      ],
+      "name": "Initialized",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "marketCapUSD",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "supplyPercentage",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "isActive",
+          "type": "bool"
+        }
+      ],
+      "name": "MarketCapThresholdUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "contract IERC20",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "pool",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "supplyAllocated",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "reserveAllocated",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "finalMarketCap",
+          "type": "uint256"
+        }
+      ],
+      "name": "TokenLaunchedToDEX",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "buyer",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "contract IERC20",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amountIn",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amountOut",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "newPrice",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "marketCap",
+          "type": "uint256"
+        }
+      ],
+      "name": "TokensBought",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "seller",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "contract IERC20",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amountIn",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amountOut",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "newPrice",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "marketCap",
+          "type": "uint256"
+        }
+      ],
+      "name": "TokensSold",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "TOTAL_SUPPLY",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "bondingCurves",
+      "outputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "internalType": "contract IERC20",
+          "name": "fundingToken",
+          "type": "address"
+        },
+        {
+          "internalType": "contract ICLMMAdapter",
+          "name": "adapter",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "virtualReserve",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "actualReserve",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "circulatingSupply",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "isLaunched",
+          "type": "bool"
+        },
+        {
+          "internalType": "bool",
+          "name": "burnPosition",
+          "type": "bool"
+        },
+        {
+          "components": [
+            {
+              "internalType": "int24",
+              "name": "launchTick",
+              "type": "int24"
+            },
+            {
+              "internalType": "int24",
+              "name": "graduationTick",
+              "type": "int24"
+            },
+            {
+              "internalType": "int24",
+              "name": "upperMaxTick",
+              "type": "int24"
+            },
+            {
+              "internalType": "uint24",
+              "name": "fee",
+              "type": "uint24"
+            },
+            {
+              "internalType": "int24",
+              "name": "tickSpacing",
+              "type": "int24"
+            },
+            {
+              "internalType": "uint256",
+              "name": "graduationLiquidity",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct ITokenLaunchpad.ValueParams",
+          "name": "valueParams",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "_token",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amountIn",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_minAmountOut",
+          "type": "uint256"
+        }
+      ],
+      "name": "buyTokens",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountOut",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_amountIn",
+          "type": "uint256"
+        }
+      ],
+      "name": "calculateFirstPurchase",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "tokensOut",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "_token",
+          "type": "address"
+        },
+        {
+          "internalType": "contract IERC20",
+          "name": "_fundingToken",
+          "type": "address"
+        },
+        {
+          "internalType": "contract ICLMMAdapter",
+          "name": "_adapter",
+          "type": "address"
+        },
+        {
+          "internalType": "bool",
+          "name": "_burnPosition",
+          "type": "bool"
+        },
+        {
+          "components": [
+            {
+              "internalType": "int24",
+              "name": "launchTick",
+              "type": "int24"
+            },
+            {
+              "internalType": "int24",
+              "name": "graduationTick",
+              "type": "int24"
+            },
+            {
+              "internalType": "int24",
+              "name": "upperMaxTick",
+              "type": "int24"
+            },
+            {
+              "internalType": "uint24",
+              "name": "fee",
+              "type": "uint24"
+            },
+            {
+              "internalType": "int24",
+              "name": "tickSpacing",
+              "type": "int24"
+            },
+            {
+              "internalType": "uint256",
+              "name": "graduationLiquidity",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct ITokenLaunchpad.ValueParams",
+          "name": "_valueParams",
+          "type": "tuple"
+        }
+      ],
+      "name": "createBondingCurve",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "_token",
+          "type": "address"
+        }
+      ],
+      "name": "disableBondingCurve",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "emergencyWithdraw",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "feeDestination",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "_token",
+          "type": "address"
+        }
+      ],
+      "name": "getBondingCurveConfig",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "contract IERC20",
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "internalType": "contract IERC20",
+              "name": "fundingToken",
+              "type": "address"
+            },
+            {
+              "internalType": "contract ICLMMAdapter",
+              "name": "adapter",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "totalSupply",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "reserveBalance",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "currentPrice",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "k",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bool",
+              "name": "isLaunched",
+              "type": "bool"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "int24",
+                  "name": "launchTick",
+                  "type": "int24"
+                },
+                {
+                  "internalType": "int24",
+                  "name": "graduationTick",
+                  "type": "int24"
+                },
+                {
+                  "internalType": "int24",
+                  "name": "upperMaxTick",
+                  "type": "int24"
+                },
+                {
+                  "internalType": "uint24",
+                  "name": "fee",
+                  "type": "uint24"
+                },
+                {
+                  "internalType": "int24",
+                  "name": "tickSpacing",
+                  "type": "int24"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "graduationLiquidity",
+                  "type": "uint256"
+                }
+              ],
+              "internalType": "struct ITokenLaunchpad.ValueParams",
+              "name": "valueParams",
+              "type": "tuple"
+            }
+          ],
+          "internalType": "struct IBondingCurve.BondingCurveConfig",
+          "name": "config",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "_token",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amountIn",
+          "type": "uint256"
+        }
+      ],
+      "name": "getBuyPrice",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountOut",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "_token",
+          "type": "address"
+        }
+      ],
+      "name": "getCurrentPrice",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "price",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getInitialPrice",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "initialPrice",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "_token",
+          "type": "address"
+        }
+      ],
+      "name": "getMarketCap",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "marketCap",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getMarketCapThresholds",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "marketCapUSD",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "supplyPercentage",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bool",
+              "name": "isActive",
+              "type": "bool"
+            }
+          ],
+          "internalType": "struct IBondingCurve.MarketCapThreshold[]",
+          "name": "thresholds",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "_token",
+          "type": "address"
+        }
+      ],
+      "name": "getMarketCapUSD",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "marketCapUSD",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "_token",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amountIn",
+          "type": "uint256"
+        }
+      ],
+      "name": "getSellPrice",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountOut",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "getSupplyAllocation",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "supplyPercentage",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_owner",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_tokenLaunchpad",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_protocolFee",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "_feeDestination",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_launchMarketCapUSD",
+          "type": "uint256"
+        }
+      ],
+      "name": "initialize",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "isBondingCurveActive",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "launchMarketCapUSD",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "_token",
+          "type": "address"
+        }
+      ],
+      "name": "launchToDEX",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "pool",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "priceOracles",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "protocolFee",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "renounceOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "_token",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amountIn",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_minAmountOut",
+          "type": "uint256"
+        }
+      ],
+      "name": "sellTokens",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountOut",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_launchMarketCapUSD",
+          "type": "uint256"
+        }
+      ],
+      "name": "setLaunchMarketCapUSD",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "marketCapUSD",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "supplyPercentage",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bool",
+              "name": "isActive",
+              "type": "bool"
+            }
+          ],
+          "internalType": "struct IBondingCurve.MarketCapThreshold[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "name": "setMarketCapThresholds",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "_fundingToken",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_oracle",
+          "type": "address"
+        }
+      ],
+      "name": "setPriceOracle",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_protocolFee",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "_feeDestination",
+          "type": "address"
+        }
+      ],
+      "name": "setProtocolSettings",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "_token",
+          "type": "address"
+        }
+      ],
+      "name": "shouldLaunchToDEX",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "shouldLaunch",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "tokenLaunchpad",
+      "outputs": [
+        {
+          "internalType": "contract ITokenLaunchpad",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "stateMutability": "payable",
+      "type": "receive"
+    }
+  ],
+  "args": [
+    "0xeD3Af36D7b9C5Bbd7ECFa7fb794eDa6E242016f5",
+    "0xE91d31063856e970e2dF74fB35c78eD674f3F80d",
+    "500",
+    "0x1F7E8a3695883cceA14C616C0Dfa841Bf3f56A33",
+    "5000000000000000000000"
+  ],
+  "numDeployments": 2
+}

@@ -42,6 +42,35 @@ export async function templateLaunchpad(
   };
 }
 
+export async function deployBondingCurve(
+  hre: HardhatRuntimeEnvironment,
+  deployer: string,
+  proxyAdmin: string,
+  launchpadAddress: string,
+  protocolFee: bigint,
+  feeDestination: string,
+  launchMarketCapUSD: bigint
+) {
+  const bondingCurveD = await deployProxy(
+    hre,
+    "BondingCurve",
+    [deployer, launchpadAddress, protocolFee, feeDestination, launchMarketCapUSD],
+    proxyAdmin,
+    "BondingCurve",
+    deployer
+  );
+
+  const bondingCurve = await hre.ethers.getContractAt(
+    "BondingCurve",
+    bondingCurveD.address
+  );
+
+  console.log("BondingCurve deployed at:", bondingCurveD.address);
+  console.log("Implementation address:", bondingCurveD.implementation);
+
+  return bondingCurve;
+}
+
 export async function deployAdapter(
   hre: HardhatRuntimeEnvironment,
   adapterContract: string,
