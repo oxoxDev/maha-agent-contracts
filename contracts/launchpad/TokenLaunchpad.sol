@@ -214,7 +214,7 @@ function createAndBuy(
       pendingBalance = token.balanceOf(address(this));
 
       // Instead of immediate DEX launch, create bonding curve
-      _createBondingCurve(token, p, pendingBalance);
+      _createBondingCurve(token, p, pendingBalance, burnPosition);
       
       emit TokenLaunched(token, address(p.adapter), address(0), p);
     }
@@ -340,7 +340,7 @@ function createAndBuy(
    * @param p The create parameters
    * @param pendingBalance The amount of tokens to transfer
    */
-  function _createBondingCurve(WAGMIEToken token, CreateParams memory p, uint256 pendingBalance) internal {
+  function _createBondingCurve(WAGMIEToken token, CreateParams memory p, uint256 pendingBalance, bool burnPosition) internal {
     require(address(bondingCurve) != address(0), "Bonding curve not set");
     
     // Create bonding curve with auto-calculated initial price
@@ -348,7 +348,8 @@ function createAndBuy(
       token,
       p.fundingToken,
       p.adapter,
-      p.valueParams // Pass the value params for DEX launch
+      burnPosition,
+      p.valueParams
     );
     
     // Transfer all tokens to bonding curve for management

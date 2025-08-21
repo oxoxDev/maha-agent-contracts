@@ -50,6 +50,7 @@ contract BondingCurve is IBondingCurve, OwnableUpgradeable, ReentrancyGuardUpgra
     uint256 actualReserve; // current reserve balance (y in formula)
     uint256 circulatingSupply; // tokens in circulation (s in formula)
     bool isLaunched;
+    bool burnPosition; 
     ITokenLaunchpad.ValueParams valueParams;
   }
 
@@ -99,6 +100,7 @@ contract BondingCurve is IBondingCurve, OwnableUpgradeable, ReentrancyGuardUpgra
     IERC20 _token,
     IERC20 _fundingToken,
     ICLMMAdapter _adapter,
+    bool _burnPosition,
     ITokenLaunchpad.ValueParams memory _valueParams
   ) external {
     require(msg.sender == address(tokenLaunchpad), "Only TokenLaunchpad can create");
@@ -114,6 +116,7 @@ contract BondingCurve is IBondingCurve, OwnableUpgradeable, ReentrancyGuardUpgra
       actualReserve: 0, // y starts at 0
       circulatingSupply: 0, // s starts at 0 (all tokens locked)
       isLaunched: false,
+      burnPosition: _burnPosition,
       valueParams: _valueParams
     });
 
@@ -485,7 +488,7 @@ contract BondingCurve is IBondingCurve, OwnableUpgradeable, ReentrancyGuardUpgra
         tickSpacing: config.valueParams.tickSpacing,
         totalAmount: remainingTokens,
         graduationAmount: graduationAmount,
-        burnPosition: false
+        burnPosition: config.burnPosition
       })
     );
 

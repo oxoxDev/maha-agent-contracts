@@ -106,12 +106,14 @@ interface IBondingCurve {
   /// @param _token The token to create a bonding curve for
   /// @param _fundingToken The funding token (e.g., WETH, USDC)
   /// @param _adapter The CLMM adapter for DEX integration
+  /// @param _burnPosition Whether to burn the position after launch
   /// @param _valueParams The parameters for DEX launch
   /// @dev Initial price is auto-calculated from bonding curve formula: r / 10^9
   function createBondingCurve(
     IERC20 _token,
     IERC20 _fundingToken,
     ICLMMAdapter _adapter,
+    bool _burnPosition,
     ITokenLaunchpad.ValueParams memory _valueParams
   ) external;
 
