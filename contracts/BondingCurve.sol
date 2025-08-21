@@ -446,6 +446,9 @@ contract BondingCurve is IBondingCurve, OwnableUpgradeable, ReentrancyGuardUpgra
     config.fundingToken.approve(address(config.adapter), type(uint256).max);
     
     // Use adapter to add single-sided liquidity
+    // Ensure graduationAmount doesn't exceed available tokens
+    uint256 graduationAmount = (remainingTokens * 80) / 100;
+    
     pool = config.adapter.addSingleSidedLiquidity(
       ICLMMAdapter.AddLiquidityParams({
         tokenBase: config.token,
@@ -456,8 +459,8 @@ contract BondingCurve is IBondingCurve, OwnableUpgradeable, ReentrancyGuardUpgra
         fee: config.valueParams.fee,
         tickSpacing: config.valueParams.tickSpacing,
         totalAmount: remainingTokens,
-        graduationAmount: config.valueParams.graduationLiquidity,
-        burnPosition: true
+        graduationAmount: graduationAmount,
+        burnPosition: false
       })
     );
 

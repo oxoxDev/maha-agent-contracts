@@ -27,6 +27,8 @@ import {IClPoolFactory} from "contracts/interfaces/thirdparty/IClPoolFactory.sol
 abstract contract BaseV3Adapter is ICLMMAdapter {
   using SafeERC20 for IERC20;
 
+  address public constant DEAD = 0x000000000000000000000000000000000000dEaD;
+
   address internal _me;
   address public launchpad;
   IClPoolFactory public clPoolFactory;

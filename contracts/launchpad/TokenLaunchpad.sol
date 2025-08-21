@@ -151,7 +151,7 @@ abstract contract TokenLaunchpad is ITokenLaunchpad, OwnableUpgradeable, ERC721E
   }
 
   /// @inheritdoc ITokenLaunchpad
-  function createAndBuy(
+function createAndBuy(
     CreateParams memory p,
     address expected,
     uint256 amount,
@@ -246,7 +246,7 @@ abstract contract TokenLaunchpad is ITokenLaunchpad, OwnableUpgradeable, ERC721E
     _refundTokens(weth);
 
     return (address(token), received, 0); // swapped is always 0 in bonding curve model
-  }
+  }  
 
   /// @inheritdoc ITokenLaunchpad
   function getTotalTokens() external view returns (uint256) {
