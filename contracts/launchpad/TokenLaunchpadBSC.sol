@@ -20,7 +20,7 @@ contract TokenLaunchpadBSC is TokenLaunchpad {
     internal
     override
   {
-    if (launchParams[IERC20(_token0)].isPremium || _token1 == address(0x6A661312938D22A2A0e27F585073E4406903990a)) {
+    if (_token1 == address(0x6A661312938D22A2A0e27F585073E4406903990a)) {
       // 100% to the owner if the fee is discounted
       IERC20(_token0).transfer(_owner, _amount0);
       IERC20(_token1).transfer(_owner, _amount1);

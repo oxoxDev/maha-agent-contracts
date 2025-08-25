@@ -32,10 +32,9 @@ abstract contract TokenLaunchpad is ITokenLaunchpad, OwnableUpgradeable, ERC721E
 
   address public feeDestination;
   ICLMMAdapter public adapter;
-  IERC20 public premiumToken;
   IERC20[] public tokens;
   IReferralDistributor public referralDestination;
-  IWETH9 public weth;
+  IERC20 public fundingToken;
   uint256 public creationFee;
   uint256 public feeDiscountAmount;
   uint256 public referralFee;
@@ -65,9 +64,8 @@ abstract contract TokenLaunchpad is ITokenLaunchpad, OwnableUpgradeable, ERC721E
   receive() external payable {}
 
   /// @inheritdoc ITokenLaunchpad
-  function initialize(address _owner, address _weth, address _premiumToken) external initializer {
-    weth = IWETH9(_weth);
-    premiumToken = IERC20(_premiumToken);
+  function initialize(address _owner, address _fundingToken) external initializer {
+    fundingToken = IERC20(_fundingToken);
     cron = _owner;
     __Ownable_init(_owner);
     __ERC721_init("WAGMIE Launchpad", "WAGMIE");
@@ -146,6 +144,10 @@ abstract contract TokenLaunchpad is ITokenLaunchpad, OwnableUpgradeable, ERC721E
     return launchParams[_token];
   }
 
+  function setFundingToken(IERC20 _fundingToken) external onlyOwner {
+    fundingToken = _fundingToken;
+  }
+
   /// @inheritdoc ITokenLaunchpad
   function createAndBuy(
     CreateParams memory p,
@@ -167,19 +169,9 @@ abstract contract TokenLaunchpad is ITokenLaunchpad, OwnableUpgradeable, ERC721E
     // send any creation fee to the fee destination
     if (creationFee > 0) payable(feeDestination).transfer(creationFee);
 
-    // wrap anything pending into weth
-    if (address(this).balance > 0) weth.deposit{value: address(this).balance}();
-
-    if (p.isPremium) {
-      premiumToken.transferFrom(msg.sender, feeDestination, feeDiscountAmount);
-    } else {
-      // non-premium tokens can't have launchpool allocations
-      require(p.launchPools.length == 0, "!premium-allocations");
-
-      // Get default parameters for the funding token
-      p.valueParams = getDefaultValueParams(p.fundingToken, p.adapter);
-      p.creatorAllocation = DEFAULT_CREATOR_ALLOCATION;
-    }
+    // Get default parameters for the funding token
+    p.valueParams = getDefaultValueParams(p.fundingToken, p.adapter);
+    p.creatorAllocation = DEFAULT_CREATOR_ALLOCATION;
 
     // take any pending balance from the sender
     if (amount > 0) {
@@ -246,7 +238,7 @@ abstract contract TokenLaunchpad is ITokenLaunchpad, OwnableUpgradeable, ERC721E
     // refund any remaining tokens
     _refundTokens(token);
     _refundTokens(p.fundingToken);
-    _refundTokens(weth);
+    _refundTokens(fundingToken);
 
     return (address(token), received, swapped);
   }
@@ -309,12 +301,7 @@ abstract contract TokenLaunchpad is ITokenLaunchpad, OwnableUpgradeable, ERC721E
   function _refundTokens(IERC20 _token) internal {
     uint256 remaining = _token.balanceOf(address(this));
     if (remaining == 0) return;
-    if (_token == weth) {
-      weth.withdraw(remaining);
-      payable(msg.sender).transfer(remaining);
-    } else {
-      _token.safeTransfer(msg.sender, remaining);
-    }
+    _token.safeTransfer(msg.sender, remaining);
   }
 
   /**

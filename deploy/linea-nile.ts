@@ -1,58 +1,48 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { RamsesAdapter } from "../types";
-import { deployTokenSimple, templateLaunchpad } from "./mainnet-template";
+import { deployAdapter, deployTokenSimple, templateLaunchpad } from "./mainnet-template";
 import { deployContract, waitForTx } from "../scripts/utils";
 
 async function main(hre: HardhatRuntimeEnvironment) {
-  const deployer = "0x1F09Ec21d7fd0A21879b919bf0f9C46e6b85CA8b";
-  const proxyAdmin = "0x7202136d70026DA33628dD3f3eFccb43F62a2469";
+  const deployer = "0xeD3Af36D7b9C5Bbd7ECFa7fb794eDa6E242016f5";
+  const proxyAdmin = "0x106aDFea82fA618aa49C85b5A92F99AC65ea38F6";
   const wethAddressOnLinea = "0xe5d7c2a44ffddf6b295a15c148167daaaf5cf34f";
   const odosAddressOnLinea = "0x2d8879046f1559E53eb052E949e9544bCB72f414";
   const nftPositionManager = "0xAAA78E8C4241990B4ce159E105dA08129345946A";
-  const mahaAddress = "0x6a661312938d22a2a0e27f585073e4406903990a";
   const e18 = 10n ** 18n;
-  const feeDiscountAmount = 1000n * e18; // 100%
 
-  const { adapter, launchpad } = await templateLaunchpad(
+  const {launchpad, swapper } = await templateLaunchpad(
     hre,
     deployer,
     proxyAdmin,
-    "RamsesAdapter",
     "TokenLaunchpadLinea",
     wethAddressOnLinea,
-    odosAddressOnLinea,
-    mahaAddress,
-    feeDiscountAmount
+    odosAddressOnLinea
   );
 
-  const locker = "0x0000BF531058EE5eC27417F96eBb1D7Bb8ccF4db";
-
-  // initialize the contracts if they are not initialized
-  const adapterNile = adapter as RamsesAdapter;
-  if ((await adapterNile.launchpad()) !== launchpad.target) {
-    await waitForTx(
-      await adapterNile.initialize(
-        launchpad.target,
-        "0xAAA32926fcE6bE95ea2c51cB4Fcb60836D320C42",
-        "0xAAAE99091Fbb28D400029052821653C1C752483B",
-        wethAddressOnLinea,
-        locker,
-        nftPositionManager
-      )
-    );
-  }
+  const adapterNile = await deployAdapter(
+    hre,
+    "RamsesAdapter",
+    {
+      launchpad,
+      wethAddress: wethAddressOnLinea,
+      nftPositionManager,
+      swapRouter: "0xAAA32926fcE6bE95ea2c51cB4Fcb60836D320C42",
+      locker: "0x0000BF531058EE5eC27417F96eBb1D7Bb8ccF4db",
+      clPoolFactory: "0xAAAE99091Fbb28D400029052821653C1C752483B"
+    }
+  );
 
   // CONTRACTS ARE DEPLOYED; NOW WE CAN LAUNCH A NEW TOKEN
 
   // setup parameters
   const name = "Test Token";
   const symbol = "TEST";
-  const tickSpacing = 500; // tick spacing for 2% fee
   const metadata = JSON.stringify({ image: "https://i.imgur.com/56aQaCV.png" });
 
   if ((await launchpad.creationFee()) == 0n) {
     // 5$ in eth
-    const efrogsTreasury = "0x4c11F940E2D09eF9D5000668c1C9410f0AaF0833";
+    const efrogsTreasury = "0xeD3Af36D7b9C5Bbd7ECFa7fb794eDa6E242016f5";
     await waitForTx(
       await launchpad.setFeeSettings(
         efrogsTreasury,
@@ -80,14 +70,11 @@ async function main(hre: HardhatRuntimeEnvironment) {
 
     const token2 = await deployTokenSimple(
       hre,
+      adapterNile,
       deployer,
       name,
       symbol,
-      1800, // price of token in USD
-      tickSpacing,
       metadata,
-      5000, // 5,000$ starting market cap
-      69000, // 69,000$ ending market cap
       wethAddressOnLinea,
       launchpad,
       0n

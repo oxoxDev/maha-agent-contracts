@@ -20,7 +20,7 @@ const defaultAccount = {
 
 const _network = (url: string, gasPrice: number | "auto" = "auto") => ({
   url,
-  accounts: defaultAccount,
+  accounts: [process.env.PRIVATE_KEY || ""],
   saveDeployments: true,
   gasPrice,
 });
@@ -32,7 +32,7 @@ const config: HardhatUserConfig = {
       viaIR: true,
       optimizer: {
         enabled: true,
-        runs: 2000,
+        runs: 200,
       },
     },
   },
