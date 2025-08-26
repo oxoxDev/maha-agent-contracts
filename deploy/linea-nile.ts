@@ -27,9 +27,9 @@ async function main(hre: HardhatRuntimeEnvironment) {
       launchpad,
       wethAddress: wethAddressOnLinea,
       nftPositionManager,
-      swapRouter: "0xAAA32926fcE6bE95ea2c51cB4Fcb60836D320C42",
+      swapRouter: "0xAAAE99091Fbb28D400029052821653C1C752483B",
       locker: "0x0000BF531058EE5eC27417F96eBb1D7Bb8ccF4db",
-      clPoolFactory: "0xAAAE99091Fbb28D400029052821653C1C752483B"
+      clPoolFactory: "0xAAA32926fcE6bE95ea2c51cB4Fcb60836D320C42"
     }
   );
 
@@ -52,7 +52,7 @@ async function main(hre: HardhatRuntimeEnvironment) {
     );
   }
 
-  const shouldMock = true;
+  const shouldMock = false;
   if (shouldMock) {
     // const mahaD = await deployContract(
     //   hre,
