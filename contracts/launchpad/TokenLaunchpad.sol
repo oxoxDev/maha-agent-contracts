@@ -20,8 +20,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IWETH9} from "@uniswap/v4-periphery/src/interfaces/external/IWETH9.sol";
 import {WAGMIEToken} from "contracts/WAGMIEToken.sol";
-
-import {IAirdropRewarder} from "contracts/interfaces/IAirdropRewarder.sol";
 import {ICLMMAdapter} from "contracts/interfaces/ICLMMAdapter.sol";
 
 import {IReferralDistributor} from "contracts/interfaces/IReferralDistributor.sol";
@@ -51,9 +49,6 @@ abstract contract TokenLaunchpad is ITokenLaunchpad, OwnableUpgradeable, ERC721E
 
   // Mapping to track adapter addresses by type
   mapping(ICLMMAdapter => bool) public adapters;
-
-  // Airdrop Rewarder contract
-  IAirdropRewarder public airdropRewarder;
 
   // Default creator allocation percentage
   uint16 public DEFAULT_CREATOR_ALLOCATION;
@@ -153,27 +148,18 @@ abstract contract TokenLaunchpad is ITokenLaunchpad, OwnableUpgradeable, ERC721E
     CreateParams memory p,
     address expected,
     uint256 amount,
-    bytes32 merkleRoot,
     bool burnPosition
   )
     external
     payable
     returns (address, uint256, uint256)
   {
-    // Ensure creator allocation is within allowed limits
-    require(p.creatorAllocation <= MAX_CREATOR_ALLOCATION, "Creator allocation exceeds maximum");
-
-    // Get the appropriate adapter based on type
     require(adapters[p.adapter], "Adapter not set");
 
-    // send any creation fee to the fee destination
     if (creationFee > 0) payable(feeDestination).transfer(creationFee);
 
-    // Get default parameters for the funding token
     p.valueParams = getDefaultValueParams(p.fundingToken, p.adapter);
-    p.creatorAllocation = DEFAULT_CREATOR_ALLOCATION;
 
-    // take any pending balance from the sender
     if (amount > 0) {
       uint256 currentBalance = p.fundingToken.balanceOf(address(this));
       if (currentBalance < amount) p.fundingToken.transferFrom(msg.sender, address(this), amount - currentBalance);
@@ -191,13 +177,6 @@ abstract contract TokenLaunchpad is ITokenLaunchpad, OwnableUpgradeable, ERC721E
       launchParams[token] = p;
 
       uint256 pendingBalance = token.balanceOf(address(this));
-
-      if (p.creatorAllocation > 0) {
-        uint256 airdropAmount = pendingBalance * p.creatorAllocation / 10_000;
-        airdropRewarder.setAirdropAmount(address(token), airdropAmount);
-        airdropRewarder.setMerkleRoot(address(token), merkleRoot);
-        token.transfer(address(airdropRewarder), airdropAmount);
-      }
 
       pendingBalance = token.balanceOf(address(this));
 
@@ -302,15 +281,5 @@ abstract contract TokenLaunchpad is ITokenLaunchpad, OwnableUpgradeable, ERC721E
     uint256 remaining = _token.balanceOf(address(this));
     if (remaining == 0) return;
     _token.safeTransfer(msg.sender, remaining);
-  }
-
-  /**
-   * @notice Set the airdrop rewarder contract
-   * @param _airdropRewarder Address of the airdrop rewarder
-   */
-  function setAirdropRewarder(address _airdropRewarder) external onlyOwner {
-    require(_airdropRewarder != address(0), "Invalid address");
-    airdropRewarder = IAirdropRewarder(_airdropRewarder);
-    emit AirdropRewarderSet(_airdropRewarder);
   }
 }

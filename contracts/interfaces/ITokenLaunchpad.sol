@@ -29,7 +29,6 @@ interface ITokenLaunchpad {
   /// @param graduationTick The tick that must be reached for graduation
   /// @param upperMaxTick The maximum tick allowed
   /// @param graduationLiquidity The liquidity at graduation
-  /// @param creatorAllocation Percentage of total supply to allocate to creator (max 5%)
   /// @param fee The fee for the token liquidity pair
   /// @param adapter The adapter used for the token launch
   struct CreateParams {
@@ -39,7 +38,6 @@ interface ITokenLaunchpad {
     string metadata;
     string name;
     string symbol;
-    uint16 creatorAllocation;
     uint256[] launchPoolAmounts;
     ValueParams valueParams;
   }
@@ -170,12 +168,11 @@ interface ITokenLaunchpad {
   /// @param p The parameters for the token launch
   /// @param expected The expected address where token will be deployed
   /// @param amount The amount of tokens to buy
-  /// @param merkleRoot The merkle root for the airdrop
   /// @param burnPosition Whether to burn the position
   /// @return token The address of the newly created token
   /// @return received The amount of tokens received if the user chooses to buy at launch
   /// @return swapped The amount of tokens swapped if the user chooses to swap at launch
-  function createAndBuy(CreateParams memory p, address expected, uint256 amount, bytes32 merkleRoot, bool burnPosition)
+  function createAndBuy(CreateParams memory p, address expected, uint256 amount, bool burnPosition)
     external
     payable
     returns (address token, uint256 received, uint256 swapped);

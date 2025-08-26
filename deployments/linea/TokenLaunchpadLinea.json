@@ -1,5 +1,5 @@
 {
-  "address": "0x3857A6FC8AFf839C5811AE96B808C2dC15179E23",
+  "address": "0x13A6d10478eF80c734B059Cb3fA742Cd188dc470",
   "abi": [
     {
       "inputs": [],
@@ -463,11 +463,6 @@
               "type": "string"
             },
             {
-              "internalType": "uint16",
-              "name": "creatorAllocation",
-              "type": "uint16"
-            },
-            {
               "internalType": "uint256[]",
               "name": "launchPoolAmounts",
               "type": "uint256[]"
@@ -622,19 +617,6 @@
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "airdropRewarder",
-      "outputs": [
-        {
-          "internalType": "contract IAirdropRewarder",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
       "inputs": [
         {
           "internalType": "address",
@@ -772,11 +754,6 @@
               "type": "string"
             },
             {
-              "internalType": "uint16",
-              "name": "creatorAllocation",
-              "type": "uint16"
-            },
-            {
               "internalType": "uint256[]",
               "name": "launchPoolAmounts",
               "type": "uint256[]"
@@ -832,11 +809,6 @@
           "internalType": "uint256",
           "name": "amount",
           "type": "uint256"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "merkleRoot",
-          "type": "bytes32"
         },
         {
           "internalType": "bool",
@@ -1183,11 +1155,6 @@
               "type": "string"
             },
             {
-              "internalType": "uint16",
-              "name": "creatorAllocation",
-              "type": "uint16"
-            },
-            {
               "internalType": "uint256[]",
               "name": "launchPoolAmounts",
               "type": "uint256[]"
@@ -1332,11 +1299,6 @@
           "internalType": "string",
           "name": "symbol",
           "type": "string"
-        },
-        {
-          "internalType": "uint16",
-          "name": "creatorAllocation",
-          "type": "uint16"
         },
         {
           "components": [
@@ -1504,19 +1466,6 @@
         }
       ],
       "name": "safeTransferFrom",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "_airdropRewarder",
-          "type": "address"
-        }
-      ],
-      "name": "setAirdropRewarder",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -1909,5 +1858,5 @@
     "0xeD3Af36D7b9C5Bbd7ECFa7fb794eDa6E242016f5",
     "0xe5d7c2a44ffddf6b295a15c148167daaaf5cf34f"
   ],
-  "numDeployments": 5
+  "numDeployments": 2
 }

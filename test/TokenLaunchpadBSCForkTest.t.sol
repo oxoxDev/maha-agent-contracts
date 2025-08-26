@@ -6,7 +6,8 @@ import {IFreeUniV3LPLocker, MockERC20, TokenLaunchpadTest} from "./TokenLaunchpa
 import {Launchpool} from "contracts/Launchpool.sol";
 import { AirdropRewarder } from "contracts/airdrop/AirdropReward.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {IERC20, ILaunchpool, ITokenLaunchpad} from "contracts/interfaces/ITokenLaunchpad.sol";
+import {IERC20, ITokenLaunchpad} from "contracts/interfaces/ITokenLaunchpad.sol";
+import {ILaunchpool} from "contracts/interfaces/ILaunchpool.sol";
 import {TokenLaunchpadBSC} from "contracts/launchpad/TokenLaunchpadBSC.sol";
 import {Swapper} from "contracts/launchpad/clmm/Swapper.sol";
 import {PancakeAdapter} from "contracts/launchpad/clmm/adapters/PancakeAdapter.sol";
@@ -72,7 +73,7 @@ contract TokenLaunchpadBscForkTest is TokenLaunchpadTest {
     _swapper = new Swapper(address(_weth), address(0), address(_launchpad));
 
     // Initialize launchpad
-    _launchpad.initialize(owner, address(_weth), address(_maha));
+    _launchpad.initialize(owner, address(_weth));
     vm.startPrank(owner);
     _launchpad.setFeeSettings(address(0x123), 0, 1000e18);
     _launchpad.toggleAdapter(_adapterPCS);
@@ -101,7 +102,6 @@ contract TokenLaunchpadBscForkTest is TokenLaunchpadTest {
         graduationLiquidity: 800_000_000 ether
       })
     );
-    _launchpad.setAirdropRewarder(address(_airdropRewarder));
     vm.stopPrank();
   }
 
@@ -121,15 +121,12 @@ contract TokenLaunchpadBscForkTest is TokenLaunchpadTest {
         tickSpacing: 200,
         graduationLiquidity: 800_000_000 ether
       }),
-      isPremium: false,
-      launchPools: new ILaunchpool[](0),
       launchPoolAmounts: new uint256[](0),
-      creatorAllocation: 0,
       adapter: _adapterPCS
     });
 
     vm.prank(creator);
-    (address tokenAddr,,) = _launchpad.createAndBuy{value: 100 ether}(params, address(0), 0, bytes32("0x1"), false);
+    (address tokenAddr,,) = _launchpad.createAndBuy{value: 100 ether}(params, address(0), 0, false);
 
     assertTrue(tokenAddr != address(0), "Token address should not be zero");
   }
@@ -150,15 +147,12 @@ contract TokenLaunchpadBscForkTest is TokenLaunchpadTest {
         tickSpacing: 200,
         graduationLiquidity: 800_000_000 ether
       }),
-      isPremium: false,
-      launchPools: new ILaunchpool[](0),
       launchPoolAmounts: new uint256[](0),
-      creatorAllocation: 0,
       adapter: _adapterThena
     });
 
     vm.prank(creator);
-    (address tokenAddr,,) = _launchpad.createAndBuy{value: 100 ether}(params, 0x0aC8F0205dD95C0b0D044b1fC4cB5d90A47Cf614, 0, bytes32("0x1"), false);
+    (address tokenAddr,,) = _launchpad.createAndBuy{value: 100 ether}(params, 0x0aC8F0205dD95C0b0D044b1fC4cB5d90A47Cf614, 0, false);
 
     assertTrue(tokenAddr != address(0), "Token address should not be zero");
   }
@@ -179,15 +173,12 @@ contract TokenLaunchpadBscForkTest is TokenLaunchpadTest {
         tickSpacing: 200,
         graduationLiquidity: 800_000_000 ether
       }),
-      isPremium: false,
-      launchPools: new ILaunchpool[](0),
       launchPoolAmounts: new uint256[](0),
-      creatorAllocation: 0,
       adapter: _adapterPCS
     });
 
     vm.prank(creator);
-    (address tokenAddr,,) = _launchpad.createAndBuy{value: 100 ether}(params, address(0), 0, bytes32("0x1"), false);
+    (address tokenAddr,,) = _launchpad.createAndBuy{value: 100 ether}(params, address(0), 0, false);
 
     assertTrue(tokenAddr != address(0), "Token address should not be zero");
 
@@ -233,15 +224,12 @@ contract TokenLaunchpadBscForkTest is TokenLaunchpadTest {
         tickSpacing: 200,
         graduationLiquidity: 800_000_000 ether
       }),
-      isPremium: false,
-      launchPools: new ILaunchpool[](0),
       launchPoolAmounts: new uint256[](0),
-      creatorAllocation: 0,
       adapter: _adapterThena
     });
 
     vm.prank(creator);
-    (address tokenAddr,,) = _launchpad.createAndBuy{value: 100 ether}(params, address(0), 0, bytes32("0x1"), false);
+    (address tokenAddr,,) = _launchpad.createAndBuy{value: 100 ether}(params, address(0), 0, false);
 
     assertTrue(tokenAddr != address(0), "Token address should not be zero");
 
@@ -307,15 +295,12 @@ contract TokenLaunchpadBscForkTest is TokenLaunchpadTest {
       fundingToken: IERC20(address(_weth)),
       salt: salt,
       valueParams: customParams,
-      isPremium: true,
-      launchPools: launchpools,
       launchPoolAmounts: launchpoolAmounts,
-      creatorAllocation: 0,
       adapter: _adapterPCS
     });
 
     // Buy with 10 WETH
-    (address tokenAddr,,) = _launchpad.createAndBuy{value: 100 ether}(params, address(0), 0, bytes32("0x1"), false);
+    (address tokenAddr,,) = _launchpad.createAndBuy{value: 100 ether}(params, address(0), 0, false);
     vm.stopPrank();
 
     // Verify premium fee was paid in MAHA
@@ -402,15 +387,12 @@ contract TokenLaunchpadBscForkTest is TokenLaunchpadTest {
       fundingToken: IERC20(address(_weth)),
       salt: salt,
       valueParams: customParams,
-      isPremium: true,
-      launchPools: launchpools,
       launchPoolAmounts: launchpoolAmounts,
-      creatorAllocation: 0,
       adapter: _adapterThena
     });
 
     // Buy with 10 WETH
-    (address tokenAddr,,) = _launchpad.createAndBuy{value: 100 ether}(params, address(0), 0, bytes32("0x1"), false);
+    (address tokenAddr,,) = _launchpad.createAndBuy{value: 100 ether}(params, address(0), 0, false);
     vm.stopPrank();
 
     // Verify premium fee was paid in MAHA
@@ -482,10 +464,7 @@ contract TokenLaunchpadBscForkTest is TokenLaunchpadTest {
       fundingToken: IERC20(address(_weth)),
       salt: salt,
       valueParams: customParams,
-      isPremium: false,
-      launchPools: launchpools,
       launchPoolAmounts: launchpoolAmounts,
-      creatorAllocation: 0,
       adapter: _adapterPCS
     });
 
@@ -493,7 +472,7 @@ contract TokenLaunchpadBscForkTest is TokenLaunchpadTest {
 
     // Verify that non-premium tokens cannot have launchpools
     vm.expectRevert("!premium-allocations");
-    _launchpad.createAndBuy{value: 100 ether}(paramsWithLaunchpool, address(0), 10 ether, bytes32("0x1"), false);
+    _launchpad.createAndBuy{value: 100 ether}(paramsWithLaunchpool, address(0), 10 ether, false);
 
     // Now create a valid non-premium token with no launchpools
     ITokenLaunchpad.CreateParams memory params = ITokenLaunchpad.CreateParams({
@@ -503,15 +482,12 @@ contract TokenLaunchpadBscForkTest is TokenLaunchpadTest {
       fundingToken: IERC20(address(_weth)),
       salt: salt,
       valueParams: customParams, // These should be ignored/overridden
-      isPremium: false,
-      launchPools: new ILaunchpool[](0),
       launchPoolAmounts: new uint256[](0),
-      creatorAllocation: 0,
       adapter: _adapterPCS
     });
 
     // Create token
-    (address tokenAddr,,) = _launchpad.createAndBuy{value: 100 ether}(params, address(0), 10 ether, bytes32("0x1"), false);
+    (address tokenAddr,,) = _launchpad.createAndBuy{value: 100 ether}(params, address(0), 10 ether, false);
     vm.stopPrank();
 
     // Get the actual parameters used from storage
@@ -566,16 +542,13 @@ contract TokenLaunchpadBscForkTest is TokenLaunchpadTest {
       fundingToken: IERC20(address(_weth)),
       salt: salt,
       valueParams: customParams,
-      isPremium: false,
-      launchPools: launchpools,
       launchPoolAmounts: launchpoolAmounts,
-      creatorAllocation: 0,
       adapter: _adapterThena
     });
 
     // Verify that non-premium tokens cannot have launchpools
     vm.expectRevert("!premium-allocations");
-    _launchpad.createAndBuy{value: 100 ether}(paramsWithLaunchpool, address(0), 10 ether, bytes32("0x1"), false);
+    _launchpad.createAndBuy{value: 100 ether}(paramsWithLaunchpool, address(0), 10 ether, false);
 
     // Now create a valid non-premium token with no launchpools
     ITokenLaunchpad.CreateParams memory params = ITokenLaunchpad.CreateParams({
@@ -585,15 +558,12 @@ contract TokenLaunchpadBscForkTest is TokenLaunchpadTest {
       fundingToken: IERC20(address(_weth)),
       salt: salt,
       valueParams: customParams, // These should be ignored/overridden
-      isPremium: false,
-      launchPools: new ILaunchpool[](0),
       launchPoolAmounts: new uint256[](0),
-      creatorAllocation: 0,
       adapter: _adapterThena
     });
 
     // Create token
-    (address tokenAddr,,) = _launchpad.createAndBuy{value: 100 ether}(params, address(0), 10 ether, bytes32("0x1"), false);
+    (address tokenAddr,,) = _launchpad.createAndBuy{value: 100 ether}(params, address(0), 10 ether, false);
     vm.stopPrank();
 
     // Get the actual parameters used from storage
@@ -653,13 +623,10 @@ contract TokenLaunchpadBscForkTest is TokenLaunchpadTest {
         tickSpacing: 20_000,
         graduationLiquidity: 800_000_000 ether
       }),
-      isPremium: false,
-      launchPools: new ILaunchpool[](0),
       launchPoolAmounts: new uint256[](0),
-      creatorAllocation: 0,
       adapter: _adapterPCS
     });
-    _launchpad.createAndBuy{value: 0.1 ether}(params, address(0), 10 ether, bytes32("0x1"), false);
+    _launchpad.createAndBuy{value: 0.1 ether}(params, address(0), 10 ether, false);
   }
 
   function test_create_not_eth_thena() public {
@@ -700,13 +667,10 @@ contract TokenLaunchpadBscForkTest is TokenLaunchpadTest {
         tickSpacing: 20_000,
         graduationLiquidity: 800_000_000 ether
       }),
-      isPremium: false,
-      launchPools: new ILaunchpool[](0),
       launchPoolAmounts: new uint256[](0),
-      creatorAllocation: 0,
       adapter: _adapterThena
     });
-    _launchpad.createAndBuy{value: 0.1 ether}(params, address(0), 10 ether, bytes32("0x1"), false);
+    _launchpad.createAndBuy{value: 0.1 ether}(params, address(0), 10 ether, false);
   }
 
   function test_mintAndBurn_pcs() public {
@@ -727,15 +691,12 @@ contract TokenLaunchpadBscForkTest is TokenLaunchpadTest {
         tickSpacing: 200,
         graduationLiquidity: 800_000_000 ether
       }),
-      isPremium: false,
-      launchPools: new ILaunchpool[](0),
       launchPoolAmounts: new uint256[](0),
-      creatorAllocation: 0,
       adapter: _adapterPCS
     });
 
     vm.prank(creator);
-    _launchpad.createAndBuy{value: 100 ether}(params, address(0), 0, bytes32("0x1"), false);
+    _launchpad.createAndBuy{value: 100 ether}(params, address(0), 0, false);
 
     uint256 balanceAfter = IERC721(NFT_MANAGER).balanceOf(deadAddress);
     assertEq(balanceAfter, balanceBefore + 2, "NFT should be transferred to dead address");
