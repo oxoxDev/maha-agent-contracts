@@ -168,11 +168,12 @@ interface ITokenLaunchpad {
   /// @param p The parameters for the token launch
   /// @param expected The expected address where token will be deployed
   /// @param amount The amount of tokens to buy
+  /// @param buyAmount The amount of tokens to buy at launch
   /// @param burnPosition Whether to burn the position
   /// @return token The address of the newly created token
   /// @return received The amount of tokens received if the user chooses to buy at launch
   /// @return swapped The amount of tokens swapped if the user chooses to swap at launch
-  function createAndBuy(CreateParams memory p, address expected, uint256 amount, bool burnPosition)
+  function createAndBuy(CreateParams memory p, address expected, uint256 amount, uint256 buyAmount, bool burnPosition)
     external
     payable
     returns (address token, uint256 received, uint256 swapped);

@@ -148,6 +148,7 @@ abstract contract TokenLaunchpad is ITokenLaunchpad, OwnableUpgradeable, ERC721E
     CreateParams memory p,
     address expected,
     uint256 amount,
+    uint256 buyAmount,
     bool burnPosition
   )
     external
@@ -210,8 +211,8 @@ abstract contract TokenLaunchpad is ITokenLaunchpad, OwnableUpgradeable, ERC721E
 
     // if the user wants to buy more tokens, they can do so
     uint256 received;
-    if (amount > 0) {
-      received = p.adapter.swapWithExactInput(p.fundingToken, token, amount - swapped, 0, p.valueParams.fee);
+    if (buyAmount > 0) {
+      received = p.adapter.swapWithExactInput(p.fundingToken, token, buyAmount - swapped, 0, p.valueParams.fee);
     }
 
     // refund any remaining tokens

@@ -1,5 +1,5 @@
 {
-  "address": "0x13A6d10478eF80c734B059Cb3fA742Cd188dc470",
+  "address": "0xb2408ee78831e1ab7593147f731dE5fE5C510f76",
   "abi": [
     {
       "inputs": [],
@@ -808,6 +808,11 @@
         {
           "internalType": "uint256",
           "name": "amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "buyAmount",
           "type": "uint256"
         },
         {
