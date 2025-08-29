@@ -1,16 +1,4 @@
 // SPDX-License-Identifier: BUSL-1.1
-
-// ███╗   ███╗ █████╗ ██╗  ██╗ █████╗
-// ████╗ ████║██╔══██╗██║  ██║██╔══██╗
-// ██╔████╔██║███████║███████║███████║
-// ██║╚██╔╝██║██╔══██║██╔══██║██╔══██║
-// ██║ ╚═╝ ██║██║  ██║██║  ██║██║  ██║
-// ╚═╝    ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝
-
-// Website: https://maha.xyz
-// Discord: https://discord.gg/mahadao
-// Twitter: https://twitter.com/mahaxyz_
-
 pragma solidity ^0.8.0;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -18,8 +6,7 @@ import {ERC721EnumerableUpgradeable} from
   "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IWETH9} from "@uniswap/v4-periphery/src/interfaces/external/IWETH9.sol";
-import {WAGMIEToken} from "contracts/WAGMIEToken.sol";
+import {SOMETHINGToken} from "contracts/SOMETHINGToken.sol";
 import {ICLMMAdapter} from "contracts/interfaces/ICLMMAdapter.sol";
 
 import {IReferralDistributor} from "contracts/interfaces/IReferralDistributor.sol";
@@ -63,7 +50,7 @@ abstract contract TokenLaunchpad is ITokenLaunchpad, OwnableUpgradeable, ERC721E
     fundingToken = IERC20(_fundingToken);
     cron = _owner;
     __Ownable_init(_owner);
-    __ERC721_init("WAGMIE Launchpad", "WAGMIE");
+    __ERC721_init("Something Launchpad", "SOMETHING");
   }
 
   /// @inheritdoc ITokenLaunchpad
@@ -148,7 +135,6 @@ abstract contract TokenLaunchpad is ITokenLaunchpad, OwnableUpgradeable, ERC721E
     CreateParams memory p,
     address expected,
     uint256 amount,
-    uint256 buyAmount,
     bool burnPosition
   )
     external
@@ -160,17 +146,13 @@ abstract contract TokenLaunchpad is ITokenLaunchpad, OwnableUpgradeable, ERC721E
     if (creationFee > 0) payable(feeDestination).transfer(creationFee);
 
     p.valueParams = getDefaultValueParams(p.fundingToken, p.adapter);
+    p.fundingToken.transferFrom(msg.sender, address(this), 1000 ether);
 
-    if (amount > 0) {
-      uint256 currentBalance = p.fundingToken.balanceOf(address(this));
-      if (currentBalance < amount) p.fundingToken.transferFrom(msg.sender, address(this), amount - currentBalance);
-    }
-
-    WAGMIEToken token;
+    SOMETHINGToken token;
 
     {
       bytes32 salt = keccak256(abi.encode(p.salt, msg.sender, p.name, p.symbol));
-      token = new WAGMIEToken{salt: salt}(p.name, p.symbol);
+      token = new SOMETHINGToken{salt: salt}(p.name, p.symbol);
       require(expected == address(0) || address(token) == expected, "Invalid token address");
 
       tokenToNftId[token] = tokens.length;
@@ -211,9 +193,7 @@ abstract contract TokenLaunchpad is ITokenLaunchpad, OwnableUpgradeable, ERC721E
 
     // if the user wants to buy more tokens, they can do so
     uint256 received;
-    if (buyAmount > 0) {
-      received = p.adapter.swapWithExactInput(p.fundingToken, token, buyAmount - swapped, 0, p.valueParams.fee);
-    }
+    received = p.adapter.swapWithExactInput(p.fundingToken, token, 1000 ether, 0, p.valueParams.fee);
 
     // refund any remaining tokens
     _refundTokens(token);

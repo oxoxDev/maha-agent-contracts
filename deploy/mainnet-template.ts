@@ -72,10 +72,10 @@ export async function deployAdapter(
     adapterD.address
   );
 
-  if (!(await args.launchpad.adapters(adapter))) {
-    console.log("whitelisting adapter");
-    await waitForTx(await args.launchpad.toggleAdapter(adapter));
-  }
+  // if (!(await args.launchpad.adapters(adapter))) {
+  //   console.log("whitelisting adapter");
+  //   await waitForTx(await args.launchpad.toggleAdapter(adapter));
+  // }
 
   return adapter;
 }

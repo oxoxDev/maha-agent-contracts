@@ -1,5 +1,5 @@
 {
-  "address": "0xb2408ee78831e1ab7593147f731dE5fE5C510f76",
+  "address": "0xF0FfCbd64B3D3c85900BcfD1C39e31E41A20b66E",
   "abi": [
     {
       "inputs": [],
@@ -808,11 +808,6 @@
         {
           "internalType": "uint256",
           "name": "amount",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "buyAmount",
           "type": "uint256"
         },
         {
@@ -1861,7 +1856,7 @@
   ],
   "args": [
     "0xeD3Af36D7b9C5Bbd7ECFa7fb794eDa6E242016f5",
-    "0xe5d7c2a44ffddf6b295a15c148167daaaf5cf34f"
+    "0xB4F57B2EEfeFdF50c38290e9f1857f894B674dd2"
   ],
-  "numDeployments": 2
+  "numDeployments": 3
 }

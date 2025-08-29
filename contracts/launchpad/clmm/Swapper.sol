@@ -1,16 +1,4 @@
 // SPDX-License-Identifier: BUSL-1.1
-
-// ███╗   ███╗ █████╗ ██╗  ██╗ █████╗
-// ████╗ ████║██╔══██╗██║  ██║██╔══██╗
-// ██╔████╔██║███████║███████║███████║
-// ██║╚██╔╝██║██╔══██║██╔══██║██╔══██║
-// ██║ ╚═╝ ██║██║  ██║██║  ██║██║  ██║
-// ╚═╝    ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝
-
-// Website: https://wagmie.com
-// Telegram: https://t.me/mahaxyz
-// Twitter: https://twitter.com/mahaxyz_
-
 pragma solidity ^0.8.0;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -18,9 +6,6 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {IWETH9} from "@uniswap/v4-periphery/src/interfaces/external/IWETH9.sol";
 import {ICLMMAdapter} from "contracts/interfaces/ICLMMAdapter.sol";
 import {ITokenLaunchpad} from "contracts/interfaces/ITokenLaunchpad.sol";
-
-import {console} from "forge-std/console.sol";
-
 contract Swapper {
   using SafeERC20 for IERC20;
 

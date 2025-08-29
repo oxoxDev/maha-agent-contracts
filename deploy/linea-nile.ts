@@ -5,18 +5,29 @@ import { deployContract, waitForTx } from "../scripts/utils";
 
 async function main(hre: HardhatRuntimeEnvironment) {
   const deployer = "0xeD3Af36D7b9C5Bbd7ECFa7fb794eDa6E242016f5";
-  const proxyAdmin = "0x106aDFea82fA618aa49C85b5A92F99AC65ea38F6";
+  const proxyAdmin = "0x5135f3A6aC33C8616b5ee59b89afc1021D1a8086";
   const wethAddressOnLinea = "0xe5d7c2a44ffddf6b295a15c148167daaaf5cf34f";
   const odosAddressOnLinea = "0x2d8879046f1559E53eb052E949e9544bCB72f414";
   const nftPositionManager = "0xAAA78E8C4241990B4ce159E105dA08129345946A";
   const e18 = 10n ** 18n;
+
+  // Deploy SOMETHING contract
+  const something = await deployContract(
+    hre,
+    "SOMETHING",
+    ["SOMETHING Token", "SOMETHING"],
+    "SOMETHING",
+    deployer
+  );
+
+  console.log("SOMETHING contract deployed at:", something.address);
 
   const {launchpad, swapper } = await templateLaunchpad(
     hre,
     deployer,
     proxyAdmin,
     "TokenLaunchpadLinea",
-    wethAddressOnLinea,
+    something.address,
     odosAddressOnLinea
   );
 
@@ -33,6 +44,33 @@ async function main(hre: HardhatRuntimeEnvironment) {
     }
   );
 
+  // Set default value parameters
+  await waitForTx(
+    await launchpad.setDefaultValueParams(
+      something.address, // _token - using SOMETHING contract
+      adapterNile.target, // _adapter - using the deployed RamsesAdapter
+      {
+        fee: 3000,
+        graduationLiquidity: 800000000000000000000000000n,
+        graduationTick: -160500,
+        launchTick: -186600,
+        tickSpacing: 60,
+        upperMaxTick: 885000
+      }
+    )
+  );
+  console.log("Default value parameters set successfully!");
+
+  // Set fee settings
+  await waitForTx(
+    await launchpad.setFeeSettings(
+      "0x5135f3A6aC33C8616b5ee59b89afc1021D1a8086",
+      2000000000000000n,
+      1000n * e18
+    )
+  );
+  console.log("Fee settings set");
+
   // CONTRACTS ARE DEPLOYED; NOW WE CAN LAUNCH A NEW TOKEN
 
   // setup parameters
@@ -42,7 +80,7 @@ async function main(hre: HardhatRuntimeEnvironment) {
 
   if ((await launchpad.creationFee()) == 0n) {
     // 5$ in eth
-    const efrogsTreasury = "0xeD3Af36D7b9C5Bbd7ECFa7fb794eDa6E242016f5";
+    const efrogsTreasury = "0x5135f3A6aC33C8616b5ee59b89afc1021D1a8086";
     await waitForTx(
       await launchpad.setFeeSettings(
         efrogsTreasury,
@@ -50,6 +88,7 @@ async function main(hre: HardhatRuntimeEnvironment) {
         1000n * e18
       )
     );
+    console.log("Fee settings set");
   }
 
   const shouldMock = false;
